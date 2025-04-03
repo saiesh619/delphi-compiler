@@ -99,7 +99,7 @@ constructorDeclaration
     ;
 
 constructorImplementation
-    : CONSTRUCTOR qualifiedIdent SEMI compoundStatement
+    : CONSTRUCTOR IDENT DOT CREATE SEMI compoundStatement
     ;
 
 destructorDeclaration

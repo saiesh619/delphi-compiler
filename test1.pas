@@ -13,21 +13,20 @@ type
 
 procedure TCalculator.ReadNumber;
 begin
-  Write('Enter a number: ');
+  Write('Enter a number : ');
   ReadLn(Number);
 end;
 
 procedure TCalculator.ShowNumber;
 begin
-  WriteLn('Your number is: ', Number);
+  WriteLn('Your number is : ', Number);
 end;
 
 var
   Calc: TCalculator;
+  Number: Integer;
 begin  
   Calc := TCalculator.Create;
-  Write('I am before reading ');
   Calc.ReadNumber;
-  Write('I am after reading ');
   Calc.ShowNumber;
 end.
