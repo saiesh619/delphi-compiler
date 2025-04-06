@@ -163,10 +163,20 @@ expression
     | methodCall
     | qualifiedIdent
     | stringLiteral
-    | relationalExpression     
+    | relationalExpression
+    |additionExpression     
     | NUMBER
     ;
 
+additionExpression
+    : factor ('+' factor)*    // Only support +
+    ;
+
+factor
+    : NUMBER
+    | IDENT
+    |qualifiedIdent
+    ;
 relationalExpression
     : additiveExpression (relOp additiveExpression)?
     ;
@@ -178,10 +188,6 @@ term
     : factor
     ;
 
-factor
-    : qualifiedIdent
-    | NUMBER
-    ;
 relOp
     : GT
     | LT
@@ -245,6 +251,10 @@ OVERRIDE: 'override';
 INHERITED: 'inherited';
 EQUAL: '=';
 EQUALTO:'==';
+PLUS   : '+';
+MINUS  : '-';
+STAR   : '*';
+SLASH  : '/';
 ASSIGN: ':=';
 LPAREN: '(';
 RPAREN: ')';

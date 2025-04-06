@@ -7,12 +7,15 @@ type
 
 procedure TLooper.RunLoop;
 begin
-    var j: Integer;
-    j:= 100 ;    
-    while j < 5 do
-      begin
-      WriteLn('i = ', j);      
-      end;
+    var j: Integer ;
+    j:= 120;
+    while j < 5 do    
+    begin    
+    continue;
+    WriteLn('!!!!!!!!!!!!!!!!!!!!!!!!', i);    
+    i := i + 1;
+  end;
+
 end;
 
 var
@@ -20,7 +23,7 @@ var
 
 begin
   var j: Integer;
-  j:= 15 ;
+  j:= 115 ;
   Looper := TLooper.Create;
   Looper.RunLoop;  
 end.

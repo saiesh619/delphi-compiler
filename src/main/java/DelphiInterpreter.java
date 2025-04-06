@@ -228,8 +228,10 @@ private Object executeMethod(Map<String, Object> instance, String methodName, Li
  
     @Override
     public Object visitExpression(delphiParser.ExpressionContext ctx) {
+        System.out.println("insdie");
        // System.out.println("Visit Expression: " + ctx.getText());
         if (ctx.NUMBER() != null) {
+            System.out.println("here");
             return Integer.parseInt(ctx.NUMBER().getText());  // Return integer value
         }        
         else if (ctx.stringLiteral() != null) {
@@ -571,11 +573,24 @@ private Object resolveVariableValue(String varName) {
     }
     return value;
 }
+public class ContinueException extends RuntimeException {
+    public ContinueException() {
+        super("Continue statement encountered");
+    }
+}
+@Override
+public Object visitContinueStatement(delphiParser.ContinueStatementContext ctx) {
+    throw new ContinueException();
+}
 @Override
 public Object visitWhileStatement(delphiParser.WhileStatementContext ctx) {
-    // Evaluate the condition
+    System.out.println("ok!!!!!!!");
     while (true) {
+        // Print the raw expression text (for debug)
+        System.out.println("While condition: " + ctx.expression().getText());
+
         Object conditionResult = visit(ctx.expression());
+        System.out.println("conditionResult = " + conditionResult);
 
         if (!(conditionResult instanceof Boolean)) {
             throw new RuntimeException("While condition must be a boolean expression.");
@@ -584,9 +599,16 @@ public Object visitWhileStatement(delphiParser.WhileStatementContext ctx) {
         if (!((Boolean) conditionResult)) {
             break; // Exit loop if condition is false
         }
-        
-            visit(ctx.compoundStatement()); // Execute the body
-        
+
+        try {
+            visit(ctx.compoundStatement()); // Execute the loop body
+        } catch (BreakException be) {
+            System.out.println("Break encountered, exiting loop");
+            break;
+        }
+     catch (ContinueException ce) {
+        continue; // Skip to next loop iteration
+    }
     }
 
     return null;
@@ -615,6 +637,16 @@ public Void visitForStatement(delphiParser.ForStatementContext ctx) {
     }
     return null;
 }
+public class BreakException extends RuntimeException {
+    public BreakException() {
+        super("Break statement encountered");
+    }
+}
+@Override
+public Object visitBreakStatement(delphiParser.BreakStatementContext ctx) {
+    throw new BreakException();
+}
+
 public Void visitIfStatement(delphiParser.IfStatementContext ctx) {
     // Evaluate the condition expression
     Object condition = visit(ctx.expression());    
@@ -665,11 +697,14 @@ public Object visitTerm(delphiParser.TermContext ctx) {
     return visitFactor(ctx.factor());
 }
 
-public Object visitFactor(delphiParser.FactorContext ctx) {    
-    // If we have a numeric literal
-   
-    // If we have a variable reference
-     if (ctx.qualifiedIdent() != null) {
+@Override
+public Object visitFactor(delphiParser.FactorContext ctx) {
+    // Handle numbers
+    if (ctx.NUMBER() != null) {
+        return Integer.parseInt(ctx.NUMBER().getText());
+    }
+
+    if (ctx.qualifiedIdent() != null) {
         String name = ctx.qualifiedIdent().getText();
         
         // Search the scope stack
@@ -678,18 +713,9 @@ public Object visitFactor(delphiParser.FactorContext ctx) {
                 return (int) scope.get(name);
             }
         }
-        throw new RuntimeException("Undefined variable: " + name);
-    } 
-    if (ctx.NUMBER() != null) {
-        
-        return Integer.parseInt(ctx.NUMBER().getText());
-    } 
-
-
-    // If none of the above matched, it's an unsupported factor
-    throw new RuntimeException("Unsupported factor: " + ctx.getText());
+    }
+    return 0;
 }
-
     public static void main(String[] args) throws Exception {
         //System.out.println("Starting Delphi Interpreter...");
 
