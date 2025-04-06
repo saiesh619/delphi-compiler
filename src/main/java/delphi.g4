@@ -1,40 +1,3 @@
-/*
-BSD License
-
-Copyright (c) 2013, Tom Everett
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. Neither the name of Tom Everett nor the names of its contributors
-   may be used to endorse or promote products derived from this software
-   without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-/*
-Adapted from pascal.g by  Hakki Dogusan, Piet Schoutteten and Marton Papp
-*/
-
-// $antlr-format alignTrailingComments true, columnLimit 150, minEmptyLines 1, maxEmptyLinesToKeep 1, reflowComments false, useTab false
-// $antlr-format allowShortRulesOnASingleLine false, allowShortBlocksOnASingleLine true, alignSemicolons hanging, alignColons hanging
 
 grammar delphi;
 
@@ -65,6 +28,7 @@ statementList
 declarationPart
     : (typeDefinitionPart
     | variableDeclarationPart
+    | assignmentStatement
     | methodImplementation
     | destructorDeclaration
     | constructorImplementation
@@ -102,6 +66,8 @@ constructorImplementation
     : CONSTRUCTOR IDENT DOT CREATE SEMI compoundStatement
     ;
 
+
+
 destructorDeclaration
     : DESTRUCTOR identifier (OVERRIDE)? SEMI
     ;
@@ -122,18 +88,61 @@ variableDeclarationPart
     : VAR variableDeclaration+
     ;
 
-
-
-
 variableDeclaration
-    : identifier COLON typeIdentifier SEMI
+    : identifier COLON typeIdentifier SEMI?
+    ;
+
+
+variableDeclarationStatement
+    : VAR variableDeclaration+
+    ;
+
+localvariableDeclarationStatement
+    : VAR variableDeclaration
+    ;
+
+statement
+    : assignmentStatement
+    | procedureCall     
+    | localvariableDeclarationStatement
+    | forStatement
+    | ifStatement
+    | whileStatement
+    | breakStatement
+    | continueStatement
+
+    ;
+
+forStatement
+    : FOR identifier ASSIGN expression (TO | DOWNTO) expression DO compoundStatement  SEMI?
+    ;
+
+ifStatement
+    : IF expression THEN compoundStatement (ELSE compoundStatement)?
+    ;
+
+whileStatement
+    : WHILE expression DO compoundStatement
+    ;
+
+breakStatement
+    : BREAK
+    ;
+
+continueStatement
+    : CONTINUE
     ;
 
 
 
-statement
-    : assignmentStatement
-    | procedureCall
+
+
+
+scope:
+    assignmentStatement
+    | procedureCall     
+    | localvariableDeclarationStatement
+    | forStatement
     ;
 
 assignmentStatement
@@ -154,10 +163,32 @@ expression
     | methodCall
     | qualifiedIdent
     | stringLiteral
+    | relationalExpression     
     | NUMBER
     ;
 
+relationalExpression
+    : additiveExpression (relOp additiveExpression)?
+    ;
+additiveExpression
+    : term
+    ;
 
+term
+    : factor
+    ;
+
+factor
+    : qualifiedIdent
+    | NUMBER
+    ;
+relOp
+    : GT
+    | LT
+    | EQUALTO
+    ;
+GT : '>';
+LT : '<';    
 objectInstantiation
     : IDENT '.' CREATE   // Allow `Create` to be an IDENT
     ;
@@ -169,6 +200,7 @@ methodCall
 qualifiedIdent
     : IDENT ('.' IDENT)* 
     |'Create'  // Supports obj.field or obj.Method
+    | COLON EQUAL
     ;
 
 
@@ -192,6 +224,13 @@ PROTECTED: 'protected';
 PROGRAM: 'program';
 CREATE: 'Create';
 TYPE: 'type';
+IF: 'if';
+THEN: 'then';
+ELSE: 'else';
+WHILE: 'while';
+DO: 'do';
+BREAK: 'break';
+CONTINUE: 'continue';
 VAR: 'var';
 CLASS: 'class';
 PROCEDURE: 'procedure';
@@ -205,13 +244,19 @@ DESTRUCTOR: 'destructor';
 OVERRIDE: 'override';
 INHERITED: 'inherited';
 EQUAL: '=';
+EQUALTO:'==';
 ASSIGN: ':=';
 LPAREN: '(';
 RPAREN: ')';
+FOR:'for';
+TO: 'to';
+DOWNTO: 'downto';
+
 // Rules for types and identifiers
 typeIdentifier
     : identifier
     | STRING
+    | INTEGER
     ;
 
 identifier
@@ -234,6 +279,7 @@ IDENT
     : ('A' .. 'Z') ('A' .. 'Z' | '0' .. '9' | '_')*
     ;
 STRING: 'String';
+INTEGER: 'Integer';
 
 simpleType
     : typeIdentifier

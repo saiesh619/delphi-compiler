@@ -9,20 +9,32 @@ type
     procedure ShowNumber;
   end;
 
+
 constructor TCalculator.Create;
 begin
-  Number := 0;  
+  WriteLn('Constructor called: Number initialized to 0');     
   WriteLn('Constructor called: Number initialized to 0');
-end;
+end;  
 
 procedure TCalculator.ShowNumber;
 begin
-  WriteLn('Your entered number is: ', Number);
+  var i:Integer;
+  var j: Integer;
+  j:= 5; 
+  Number:= 2;
+  WriteLn('global variable ', global);
+  for i := 1 to 10 do
+  begin
+      WriteLn('Local variable ', j);
+      WriteLn('Class variable ', Number);
+  end;
 end;
 
 var
   Calc: TCalculator;
-begin  
+begin
+  var global : Integer;
+  global:= 15 ;
   Calc := TCalculator.Create;   
   Calc.ShowNumber;
 end.

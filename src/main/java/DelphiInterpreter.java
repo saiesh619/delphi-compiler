@@ -1,4 +1,6 @@
 import java.nio.file.Paths;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
  
 public class DelphiInterpreter extends delphiBaseVisitor <Object> {
     private Map<String, Integer> variables = new HashMap<>();
+    private Map<String, Integer> localVariablesMap = new HashMap<>();
+    private final Deque<Map<String, Object>> scopes = new ArrayDeque<>();
     private Scanner scanner = new Scanner(System.in);
     private Map<String, Map<String, Object>> objects = new HashMap<>();
     private Map<String, Map<String, Object>> classDefinitions = new HashMap<>();
@@ -44,6 +48,13 @@ public class DelphiInterpreter extends delphiBaseVisitor <Object> {
     //System.out.println("Method " + method + " added to class " + className);
 
     return null;
+}
+@Override
+public Object visitCompoundStatement(delphiParser.CompoundStatementContext ctx) {
+    scopes.push(new HashMap<>());
+    Object result = visit(ctx.statementList());
+    scopes.pop();
+    return result;
 }
 
 @Override
@@ -220,86 +231,113 @@ private Object executeMethod(Map<String, Object> instance, String methodName, Li
        // System.out.println("Visit Expression: " + ctx.getText());
         if (ctx.NUMBER() != null) {
             return Integer.parseInt(ctx.NUMBER().getText());  // Return integer value
-        }
-        
+        }        
         else if (ctx.stringLiteral() != null) {
             return ctx.stringLiteral().getText();  // Return string value
         } else if (ctx.qualifiedIdent() != null) {
             String varName = ctx.qualifiedIdent().getText();            
-            if (!variables.containsKey(varName)) {
-                throw new RuntimeException("Undefined variable: " + varName);
+            for (Map<String, Object> scope : scopes) {
+                
+                if (scope.containsKey("varName")) {
+                    return scope.get(varName);
+                }
             }
             return variables.get(varName);
         } else if (ctx.methodCall() != null) {
             return visit(ctx.methodCall());  // Visit method calls
+        }
+        else if (ctx.relationalExpression() != null) {
+            return visitRelationalExpression(ctx.relationalExpression());
         }
         else if (ctx.objectInstantiation() != null) {
             return visit(ctx.objectInstantiation());  // Visit method calls
         }
     
         return 0; // Default case
-    }
-    
-    public static void main(String[] args) throws Exception {
-        //System.out.println("Starting Delphi Interpreter...");
-
-        // 🔹 Use a hardcoded string instead of System.in
-        String filePath = args[0];
-        CharStream input = CharStreams.fromPath(Paths.get(filePath));
-
-        //System.out.println("Creating Lexer...");
-        delphiLexer lexer = new delphiLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-
-        //System.out.println("Creating Parser...");
-        delphiParser parser = new delphiParser(tokens);
-
-        // 🔹 Enable error reporting
-        parser.removeErrorListeners();
-        parser.addErrorListener(new org.antlr.v4.runtime.ConsoleErrorListener());
-
-        //System.out.println("Parsing Program...");
-        ParseTree tree = parser.program();  // 🔸 Ensure "program" is the start rule!
-
-        // 🔹 Print the parse tree
-       // System.out.println("Parse Tree:");
-       // System.out.println(tree.toStringTree(parser));
-
-        //System.out.println("Starting Interpretation...");
-        DelphiInterpreter interpreter = new DelphiInterpreter();
-        interpreter.visit(tree);
-
-        //System.out.println("Execution Completed.");
-    }
+    } 
     @Override
 public Object visitAssignmentStatement(delphiParser.AssignmentStatementContext ctx) {
     String varName = ctx.qualifiedIdent().getText();
     
     Object value = visit(ctx.expression()); // Evaluate right-hand side
-
-    // If the value is an instance, store it in the variable map
-    if (value instanceof String && ((String) value).startsWith("Instance_")) {
-        objects.put(varName, objects.get(value)); // Store instance reference
-        //System.out.println("Variable " + varName + " now references " + value);
-    } else {
-        variables.put(varName, (Integer) value); // Regular integer assignment
+    
+    if (value instanceof String && ((String) value).startsWith("Instance_")) {        
+        objects.put(varName, objects.get(value));
+    } if (currentClassName != null && objects.containsKey(currentClassName)) {
+        Map<String, Object> instance = objects.get(currentClassName);
+        if (instance.containsKey(varName)) {
+            System.out.println("Updating field in object " + currentClassName + ": " + varName + " = " + value);
+            instance.put(varName, value);
+            return null;
+        }
     }
+
+    // 🔹 Case 2: Local variable
+    if (!scopes.isEmpty()) {
+        System.out.println("Storing in local scope: " + varName + " = " + value);
+        scopes.peek().put(varName, value);
+        return null;
+    }
+
 
 
     return null;
 }
 @Override
+public Object visitLocalvariableDeclarationStatement(delphiParser.LocalvariableDeclarationStatementContext ctx) {
+    // Assuming the grammar: 'var' IDENT ':' typeIdentifier (':=' expression)? ';'
+    String varName = ctx.getChild(1).getText();  // IDENT is child #1
+    Object value = null;
+
+    // Check for ':=' assignment (child #4) and expression (child #5)
+    if (ctx.getChildCount() > 5 && ctx.getChild(4).getText().equals(":=")) {
+        value = visit(ctx.getChild(5));  // Expression
+    }
+
+    if (!scopes.isEmpty()) {
+        scopes.peek().put(varName, value);
+        System.out.println("Declared variable: " + varName + " with value: " + value);
+    } else {
+        throw new RuntimeException("No scope available for local variable declaration.");
+    }
+
+    return null;
+}
+
+
+
+@Override
 public Object visitStatement(delphiParser.StatementContext ctx) {
+    
     if (ctx.assignmentStatement() != null) {
         return visit(ctx.assignmentStatement());
     } else if (ctx.procedureCall() != null) {
         return visit(ctx.procedureCall());
     } else if (ctx.getChild(0) instanceof delphiParser.MethodCallContext) {
         return visit(ctx.getChild(0));  // ✅ Ensure method calls are visited
-    } else {
+    }
+    else if (ctx.forStatement()!=null){
+        return visit(ctx.getChild(0));
+    }
+    else if (ctx.ifStatement() != null) {
+        return visit(ctx.getChild(0));
+    }
+    else if(ctx.whileStatement()!= null){
+        return visit(ctx.getChild(0));
+    }
+    else if(ctx.breakStatement()!=null){
+        return visit(ctx.getChild(0));
+    }
+    else if(ctx.continueStatement()!=null){
+        return visit(ctx.getChild(0));
+    }
+    else if (ctx.localvariableDeclarationStatement()!=null){
+        return visit(ctx.getChild(0));
+    } 
+    else {
         System.out.println("Unknown statement type: " + ctx.getText());
     }
+    
     return null;
 }
 
@@ -307,6 +345,7 @@ public Object visitStatement(delphiParser.StatementContext ctx) {
 @Override
 public Object visitStatementList(delphiParser.StatementListContext ctx) {
     for (delphiParser.StatementContext statementCtx : ctx.statement()) {
+        
         visit(statementCtx); // 🔹 Process each statement
     }
     return null;
@@ -328,9 +367,10 @@ public Object visitProcedureCall(delphiParser.ProcedureCallContext ctx) {
     if (procedureName.equalsIgnoreCase("Write") || procedureName.equalsIgnoreCase("WriteLn")) {
         if (ctx.parameterList() != null && ctx.parameterList().expression().size()>=1) {
 
-            if(ctx.parameterList().expression().size()==2){
-                Object valueToPrint = resolveVariableValue(ctx.parameterList().expression(1).getText());
-                    System.out.println(ctx.parameterList().expression(0).getText().substring(1, 
+            if(ctx.parameterList().expression().size()==2){                
+                Object valueToPrint = resolveVariableValue(ctx.parameterList().expression(1).getText());                
+                    System.out.println(
+                        ctx.parameterList().expression(0).getText().substring(1, 
                         ctx.parameterList().expression(0).getText().length()-1) + valueToPrint);
 
             }
@@ -521,7 +561,165 @@ public Object visitFieldDeclaration(delphiParser.FieldDeclarationContext ctx) {
 
 private Object resolveVariableValue(String varName) {
     Object value =  objects.get(currentClassName).get(varName);
+    if(value == null){
+    for (Map<String, Object> scope : scopes) {        
+        if (scope.containsKey(varName)) {                
+            return (int) scope.get(varName);
+        }
+        
+    }
+    }
     return value;
 }
+@Override
+public Object visitWhileStatement(delphiParser.WhileStatementContext ctx) {
+    // Evaluate the condition
+    while (true) {
+        Object conditionResult = visit(ctx.expression());
 
+        if (!(conditionResult instanceof Boolean)) {
+            throw new RuntimeException("While condition must be a boolean expression.");
+        }
+
+        if (!((Boolean) conditionResult)) {
+            break; // Exit loop if condition is false
+        }
+        
+            visit(ctx.compoundStatement()); // Execute the body
+        
+    }
+
+    return null;
+}
+
+// Add to your visitor class (e.g., DelphiInterpreter)
+@Override
+public Void visitForStatement(delphiParser.ForStatementContext ctx) {
+    
+    String loopVar = ctx.identifier().getText();
+    int start = Integer.parseInt(ctx.expression(0).getText());
+    int end = Integer.parseInt(ctx.expression(1).getText());
+    boolean isTo = ctx.TO() != null;
+
+    if (isTo) {
+        for (int i = start; i <= end; i++) {
+                        
+            visit(ctx.compoundStatement());
+        }
+    } else {
+        for (int i = start; i >= end; i--) {
+            System.out.println("Setting " + loopVar + " to " + i);
+            // Same here
+            
+        }
+    }
+    return null;
+}
+public Void visitIfStatement(delphiParser.IfStatementContext ctx) {
+    // Evaluate the condition expression
+    Object condition = visit(ctx.expression());    
+    System.out.println("condition" + condition);
+    if (condition instanceof Boolean && (Boolean) condition) {    
+        // If true, execute the THEN block
+        visit(ctx.compoundStatement(0));
+    } 
+
+    return null;
+}
+
+    public Object visitRelationalExpression(delphiParser.RelationalExpressionContext ctx) {
+        // There's always at least one additiveExpression child
+        int left = (int) visitAdditiveExpression(ctx.additiveExpression(0));
+    
+        // If there's no second additiveExpression or no relOp, just return `left`
+        // or treat it as no-op. Modify if you want a default or error in that scenario.
+        if (ctx.additiveExpression().size() == 1) {
+            return left;  // No operator => just pass back the single value
+        }
+    
+        // Otherwise, we do have 2 additiveExpressions plus an operator
+        int right = (int) visitAdditiveExpression(ctx.additiveExpression(1));
+        String op = ctx.relOp().getText(); // or ctx.getChild(1).getText()
+    
+        switch (op) {
+            case ">" -> {
+                return left > right;
+            }
+            case "<" -> {
+                return left < right;
+            }
+            case "=" -> {
+                return left == right;
+            }
+            default -> throw new RuntimeException("Unsupported relational operator: " + op);
+        }
+    }
+    
+public Object visitAdditiveExpression(delphiParser.AdditiveExpressionContext ctx) {
+    
+    return visitTerm(ctx.term());
+}
+
+public Object visitTerm(delphiParser.TermContext ctx) {
+    
+    return visitFactor(ctx.factor());
+}
+
+public Object visitFactor(delphiParser.FactorContext ctx) {    
+    // If we have a numeric literal
+   
+    // If we have a variable reference
+     if (ctx.qualifiedIdent() != null) {
+        String name = ctx.qualifiedIdent().getText();
+        
+        // Search the scope stack
+        for (Map<String, Object> scope : scopes) {
+            if (scope.containsKey(name)) {
+                return (int) scope.get(name);
+            }
+        }
+        throw new RuntimeException("Undefined variable: " + name);
+    } 
+    if (ctx.NUMBER() != null) {
+        
+        return Integer.parseInt(ctx.NUMBER().getText());
+    } 
+
+
+    // If none of the above matched, it's an unsupported factor
+    throw new RuntimeException("Unsupported factor: " + ctx.getText());
+}
+
+    public static void main(String[] args) throws Exception {
+        //System.out.println("Starting Delphi Interpreter...");
+
+        // 🔹 Use a hardcoded string instead of System.in
+        String filePath = args[0];
+        CharStream input = CharStreams.fromPath(Paths.get(filePath));
+
+        //System.out.println("Creating Lexer...");
+        delphiLexer lexer = new delphiLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+
+        //System.out.println("Creating Parser...");
+        delphiParser parser = new delphiParser(tokens);
+
+        // 🔹 Enable error reporting
+        parser.removeErrorListeners();
+        parser.addErrorListener(new org.antlr.v4.runtime.ConsoleErrorListener());
+
+        //System.out.println("Parsing Program...");
+        ParseTree tree = parser.program();  // 🔸 Ensure "program" is the start rule!
+
+        // 🔹 Print the parse tree
+       // System.out.println("Parse Tree:");
+       // System.out.println(tree.toStringTree(parser));
+
+        //System.out.println("Starting Interpretation...");
+        DelphiInterpreter interpreter = new DelphiInterpreter();
+        interpreter.visit(tree);
+
+        //System.out.println("Execution Completed.");
+    }
 }
