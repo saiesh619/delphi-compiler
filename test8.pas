@@ -1,4 +1,4 @@
-program continueLoop;
+program Break;
 type
   TLooper = class
   public
@@ -12,9 +12,9 @@ begin
     while j < 10 do    
     begin
     j := j + 1;
-    if j < 8 then
-    begin
-    continue;
+    if j > 5 then
+    begin 
+    break;
     end;
     WriteLn('Counter = ', j);        
     end;

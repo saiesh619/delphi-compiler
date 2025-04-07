@@ -1,4 +1,4 @@
-program forLoop;
+program GlobalVar;
 
 type
   TCalculator = class
@@ -16,16 +16,15 @@ begin
 end;  
 
 procedure TCalculator.ShowNumber;
-begin   
-  for i := 1 to 10 do
-  begin
-      WriteLn('Local variable ',i);      
-  end;
+begin      
+      WriteLn('Global variable ', j);      
 end;
 
 var
   Calc: TCalculator;
 begin
+  var j : Integer;
+  j:= 15 ;
   Calc := TCalculator.Create;   
   Calc.ShowNumber;
 end.

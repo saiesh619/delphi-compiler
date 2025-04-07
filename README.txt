@@ -64,8 +64,9 @@ java -cp "lib/antlr4.jar:target" DelphiInterpreter test1.pas
 java -cp "lib/antlr4.jar:target" DelphiInterpreter test2.pas
 java -cp "lib/antlr4.jar:target" DelphiInterpreter test3.pas
 java -cp "lib/antlr4.jar:target" DelphiInterpreter test4.pas
+java -cp "lib/antlr4.jar:target" DelphiInterpreter test5.pas
 ```
-
+java -cp "lib/antlr4.jar:target" DelphiInterpreter test4.pas
 ---
 
 ## 🧪 Test Case Breakdown

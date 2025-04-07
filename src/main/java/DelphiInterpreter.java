@@ -2,6 +2,7 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -52,8 +53,9 @@ public class DelphiInterpreter extends delphiBaseVisitor <Object> {
 @Override
 public Object visitCompoundStatement(delphiParser.CompoundStatementContext ctx) {
     scopes.push(new HashMap<>());
+    System.out.println("NEW SCOPE CREATED");
     Object result = visit(ctx.statementList());
-    scopes.pop();
+    scopes.pop(); 
     return result;
 }
 
@@ -228,31 +230,44 @@ private Object executeMethod(Map<String, Object> instance, String methodName, Li
  
     @Override
     public Object visitExpression(delphiParser.ExpressionContext ctx) {
-        System.out.println("insdie");
+        
+         if (ctx.relationalExpression() != null) {
+            return visitRelationalExpression(ctx.relationalExpression());
+        }
        // System.out.println("Visit Expression: " + ctx.getText());
         if (ctx.NUMBER() != null) {
-            System.out.println("here");
+            
             return Integer.parseInt(ctx.NUMBER().getText());  // Return integer value
         }        
         else if (ctx.stringLiteral() != null) {
             return ctx.stringLiteral().getText();  // Return string value
         } else if (ctx.qualifiedIdent() != null) {
-            String varName = ctx.qualifiedIdent().getText();            
-            for (Map<String, Object> scope : scopes) {
+            
+            String varName = ctx.qualifiedIdent().getText();  
+            
+            
+            for (Map<String, Object> scope : scopes) {                
                 
-                if (scope.containsKey("varName")) {
+                if (scope.containsKey(varName)) {
                     return scope.get(varName);
-                }
+                } 
             }
             return variables.get(varName);
         } else if (ctx.methodCall() != null) {
             return visit(ctx.methodCall());  // Visit method calls
         }
-        else if (ctx.relationalExpression() != null) {
-            return visitRelationalExpression(ctx.relationalExpression());
-        }
+        
         else if (ctx.objectInstantiation() != null) {
             return visit(ctx.objectInstantiation());  // Visit method calls
+        } else if (ctx.expression().size() == 2 && ctx.op != null) {
+            
+            
+            int left = (int) visit(ctx.expression(0));
+            int right = (int) visit(ctx.expression(1));
+            
+            return ctx.op.getText().equals("+") ? left + right : left - right;
+
+            
         }
     
         return 0; // Default case
@@ -268,23 +283,38 @@ public Object visitAssignmentStatement(delphiParser.AssignmentStatementContext c
     } if (currentClassName != null && objects.containsKey(currentClassName)) {
         Map<String, Object> instance = objects.get(currentClassName);
         if (instance.containsKey(varName)) {
-            System.out.println("Updating field in object " + currentClassName + ": " + varName + " = " + value);
+            
             instance.put(varName, value);
             return null;
         }
     }
+// 🔹 Case 2: Local variable
+if (!scopes.isEmpty()) {
+    boolean updated = false;
 
-    // 🔹 Case 2: Local variable
-    if (!scopes.isEmpty()) {
-        System.out.println("Storing in local scope: " + varName + " = " + value);
-        scopes.peek().put(varName, value);
-        return null;
+    Iterator<Map<String, Object>> descending = ((Deque<Map<String, Object>>) scopes).descendingIterator();
+while (descending.hasNext()) {
+    Map<String, Object> scope = descending.next();
+    if (scope.containsKey(varName)) {
+        
+        scope.put(varName, value);
+        updated = true;
+        break;
     }
+}
 
 
-
+    if (!updated) {
+        
+        scopes.peek().put(varName, value);
+    }
+}
+    
     return null;
 }
+
+
+    
 @Override
 public Object visitLocalvariableDeclarationStatement(delphiParser.LocalvariableDeclarationStatementContext ctx) {
     // Assuming the grammar: 'var' IDENT ':' typeIdentifier (':=' expression)? ';'
@@ -298,7 +328,7 @@ public Object visitLocalvariableDeclarationStatement(delphiParser.LocalvariableD
 
     if (!scopes.isEmpty()) {
         scopes.peek().put(varName, value);
-        System.out.println("Declared variable: " + varName + " with value: " + value);
+        
     } else {
         throw new RuntimeException("No scope available for local variable declaration.");
     }
@@ -573,6 +603,7 @@ private Object resolveVariableValue(String varName) {
     }
     return value;
 }
+
 public class ContinueException extends RuntimeException {
     public ContinueException() {
         super("Continue statement encountered");
@@ -582,50 +613,50 @@ public class ContinueException extends RuntimeException {
 public Object visitContinueStatement(delphiParser.ContinueStatementContext ctx) {
     throw new ContinueException();
 }
-@Override
-public Object visitWhileStatement(delphiParser.WhileStatementContext ctx) {
-    System.out.println("ok!!!!!!!");
-    while (true) {
-        // Print the raw expression text (for debug)
-        System.out.println("While condition: " + ctx.expression().getText());
-
-        Object conditionResult = visit(ctx.expression());
-        System.out.println("conditionResult = " + conditionResult);
-
-        if (!(conditionResult instanceof Boolean)) {
-            throw new RuntimeException("While condition must be a boolean expression.");
-        }
-
-        if (!((Boolean) conditionResult)) {
-            break; // Exit loop if condition is false
-        }
-
-        try {
-            visit(ctx.compoundStatement()); // Execute the loop body
-        } catch (BreakException be) {
-            System.out.println("Break encountered, exiting loop");
-            break;
-        }
-     catch (ContinueException ce) {
-        continue; // Skip to next loop iteration
-    }
-    }
-
-    return null;
+public boolean asBoolean(Object value) {
+    if (value instanceof Boolean) return (Boolean) value;
+    if (value instanceof Integer) return (Integer) value != 0;
+    if (value instanceof String) return !((String) value).isEmpty();
+    return false;
 }
-
+private boolean breakFlag = false;
+private boolean continueFlag = false;
+ 
+    private void exitScope() {
+        scopes.pop();
+    }
+    static class ReturnValue {
+        Object value;
+        ReturnValue(Object value) { this.value = value; }
+    }
+   
+@Override
+    public Object visitWhileStatement(delphiParser.WhileStatementContext ctx) {
+        while (asBoolean(visit(ctx.expression()))) {
+            try {
+                visit(ctx.compoundStatement()); // Execute the loop body
+            } catch (BreakException be) {
+                System.out.println("Break encountered, exiting loop");
+                break;
+            }
+         catch (ContinueException ce) {
+            continue; // Skip to next loop iteration
+        }
+    }
+                 return null;
+    }
 // Add to your visitor class (e.g., DelphiInterpreter)
 @Override
 public Void visitForStatement(delphiParser.ForStatementContext ctx) {
     
     String loopVar = ctx.identifier().getText();
-    int start = Integer.parseInt(ctx.expression(0).getText());
+    int start = Integer.parseInt(ctx.expression(0).getText());    
     int end = Integer.parseInt(ctx.expression(1).getText());
     boolean isTo = ctx.TO() != null;
 
     if (isTo) {
         for (int i = start; i <= end; i++) {
-                        
+            scopes.peek().put(loopVar,i);            
             visit(ctx.compoundStatement());
         }
     } else {
@@ -650,7 +681,7 @@ public Object visitBreakStatement(delphiParser.BreakStatementContext ctx) {
 public Void visitIfStatement(delphiParser.IfStatementContext ctx) {
     // Evaluate the condition expression
     Object condition = visit(ctx.expression());    
-    System.out.println("condition" + condition);
+    
     if (condition instanceof Boolean && (Boolean) condition) {    
         // If true, execute the THEN block
         visit(ctx.compoundStatement(0));
@@ -658,6 +689,7 @@ public Void visitIfStatement(delphiParser.IfStatementContext ctx) {
 
     return null;
 }
+
 
     public Object visitRelationalExpression(delphiParser.RelationalExpressionContext ctx) {
         // There's always at least one additiveExpression child
@@ -672,7 +704,7 @@ public Void visitIfStatement(delphiParser.IfStatementContext ctx) {
         // Otherwise, we do have 2 additiveExpressions plus an operator
         int right = (int) visitAdditiveExpression(ctx.additiveExpression(1));
         String op = ctx.relOp().getText(); // or ctx.getChild(1).getText()
-    
+     
         switch (op) {
             case ">" -> {
                 return left > right;
@@ -699,23 +731,50 @@ public Object visitTerm(delphiParser.TermContext ctx) {
 
 @Override
 public Object visitFactor(delphiParser.FactorContext ctx) {
-    // Handle numbers
     if (ctx.NUMBER() != null) {
         return Integer.parseInt(ctx.NUMBER().getText());
     }
 
     if (ctx.qualifiedIdent() != null) {
         String name = ctx.qualifiedIdent().getText();
-        
-        // Search the scope stack
-        for (Map<String, Object> scope : scopes) {
+        // Search from innermost to outermost scope
+        Iterator<Map<String, Object>> descending = ((Deque<Map<String, Object>>) scopes).descendingIterator();
+        while (descending.hasNext()) {
+            Map<String, Object> scope = descending.next();
             if (scope.containsKey(name)) {
-                return (int) scope.get(name);
+                Object value = scope.get(name);
+                if (value instanceof Integer) {
+                    return value;
+                } else {
+                    System.err.println("Invalid or null value for variable '" + name + "': " + value);
+                    return 0;
+                }
             }
         }
+        System.err.println("Variable not found: " + name);
     }
+    if(ctx.IDENT()!=null){
+        String name = ctx.IDENT().getText();
+        // Search from innermost to outermost scope
+        Iterator<Map<String, Object>> descending = ((Deque<Map<String, Object>>) scopes).descendingIterator();
+        while (descending.hasNext()) {
+            Map<String, Object> scope = descending.next();
+            if (scope.containsKey(name)) {
+                Object value = scope.get(name);
+                if (value instanceof Integer) {
+                    return value;
+                } else {
+                    System.err.println("Invalid or null value for variable '" + name + "': " + value);
+                    return 0;
+                }
+            }
+        }
+        System.err.println("Variable not found: " + name);
+    }
+    
     return 0;
 }
+
     public static void main(String[] args) throws Exception {
         //System.out.println("Starting Delphi Interpreter...");
 
@@ -748,4 +807,8 @@ public Object visitFactor(delphiParser.FactorContext ctx) {
 
         //System.out.println("Execution Completed.");
     }
+    
+ 
+    
+    
 }

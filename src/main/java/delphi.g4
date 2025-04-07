@@ -110,7 +110,6 @@ statement
     | whileStatement
     | breakStatement
     | continueStatement
-
     ;
 
 forStatement
@@ -159,18 +158,15 @@ parameterList
     : expression (COMMA expression)*
     ;
 expression
-    : objectInstantiation
-    | methodCall
-    | qualifiedIdent
-    | stringLiteral
-    | relationalExpression
-    |additionExpression     
-    | NUMBER
+    : objectInstantiation   
+    | expression op=('+' | '-') expression   
+    | methodCall                              
+    | qualifiedIdent                    
+    | stringLiteral                     
+    | relationalExpression              
+    | NUMBER                            
     ;
 
-additionExpression
-    : factor ('+' factor)*    // Only support +
-    ;
 
 factor
     : NUMBER
