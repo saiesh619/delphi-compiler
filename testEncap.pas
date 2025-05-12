@@ -6,6 +6,7 @@ type
     Value: Integer;
   public
     constructor Create;
+    procedure SetValue;
     procedure Increment;
     function GetValue;
   end;
@@ -30,6 +31,7 @@ var
 begin
   Counter := TCounter.Create;
   Counter.SetValue;
+  Counter.Increment;
   Counter.Increment;
   Counter.Increment;
   Writeln('Counter = ', Counter.GetValue());

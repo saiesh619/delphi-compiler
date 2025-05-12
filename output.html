@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Emscripten-Generated Code</title>
+    <title>PLP-PROJ3</title>
     <style>body {
   font-family: arial;
   margin: 0;
@@ -144,11 +144,6 @@ canvas.emscripten { border: 0px none; background-color: black; }
       var Module = {
         print(...args) {
           console.log(...args);
-          // These replacements are necessary if you render to raw HTML
-          //text = text.replace(/&/g, "&amp;");
-          //text = text.replace(/</g, "&lt;");
-          //text = text.replace(/>/g, "&gt;");
-          //text = text.replace('\n', '<br>', 'g');
           if (outputElement) {
             var text = args.join(' ');
             outputElement.value += text + "\n";
@@ -187,7 +182,6 @@ canvas.emscripten { border: 0px none; background-color: black; }
       };
       Module.setStatus('Downloading...');
       window.onerror = (event) => {
-        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
         Module.setStatus('Exception thrown, see JavaScript console');
         spinnerElement.style.display = 'none';
         Module.setStatus = (text) => {

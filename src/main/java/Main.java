@@ -1,10 +1,7 @@
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
+import java.nio.file.*;
+import java.io.*;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -31,6 +28,6 @@ public class Main {
         String outPath = filePath.replace(".pas", ".ll");
         Files.writeString(Paths.get(outPath), llvmIR);
 
-        System.out.println("✅ LLVM IR saved to " + outPath);
+        //System.out.println("✅ LLVM IR saved to " + outPath);
     }
 }

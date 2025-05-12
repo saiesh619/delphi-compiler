@@ -1,59 +1,82 @@
-HOW TO RUN THE CODE:
+--------------------------------------
+Delphi to LLVM IR Compiler (Project 3)
+--------------------------------------
 
-delphi.g4 - is in src/main/java
-DelphiInterpreter.java - is in src/main/java
-test files - in delphi-compiler directory (main folder)
+This project compiles our Delphi/Pascal language to LLVM Intermediate Representation (IR).
+As an extension of Project 1 and 2, this project replaces interpretation with code generation. For extra credit,
+it also supports compiling LLVM IR to WebAssembly (WASM) using Emscripten and running it in a browser.
 
-1. To generate parser and lexers and helpers (run from src/main/java directory)
-    antlr4 -visitor -no-listener delphi.g4
+-------------------------------------------------------
+Project Directory Contents (delphi-compiler_final/)
+-------------------------------------------------------
 
-    antlr4 -visitor -no-listener src/main/java/delphi.g4
+Main.java               - Main class that parses .pas files and generates LLVM IR
+LLVMGenerator.java      - Visitor that emits LLVM IR instead of evaluating
+delphi.g4               - ANTLR grammar 
+*                       - Sample Delphi input files
+*.ll                    - Corresponding generated LLVM IR files
+output.wasm             - WebAssembly file compiled from LLVM IR (via Emscripten)
+output.html             - Web page to load and execute the .wasm module
+output.js               - JavaScript to load and call exported WASM functions
+run.sh                  - Run and verify individual testfiles (execute ./output after this)
+compile_all.sh          - Script to batch compile all .pas files to .ll files
 
-2. Compile all the Java files (run from delphi-compiler directory(main folder))
+---------------------
+How to Build and Run
+---------------------
 
-    javac -cp "lib/antlr4.jar:src/main/java" -d target src/main/java/*.java
+1. Generate ANTLR parser and compile Java files:
+   antlr4 -visitor -no-listener delphi.g4
+   javac -cp lib/antlr4.jar *.java
 
-3. Run Java Interpreter for Delphi for each test file (run from delphi-compiler directory(main folder))
-    Test case 1 : java -cp "lib/antlr4.jar:target" DelphiInterpreter test1.pas 
-    Test case 2 : java -cp "lib/antlr4.jar:target" DelphiInterpreter test2.pas 
-    Test case 3 : java -cp "lib/antlr4.jar:target" DelphiInterpreter test3.pas 
-    Test case 4 : java -cp "lib/antlr4.jar:target" Main test.pas 
+2. Compile a single .pas file to LLVM IR:
+   java -cp lib/antlr4.jar:target Main test1.pas
 
-    Similary for other tests 
+3. Compile all .pas files to LLVM IR .ll at once in the directory:
+   chmod +x compileAll.sh
+   ./compileAll.sh
 
-export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
- 
-llc -march=wasm32 -filetype=obj output.ll -o output.o
- 
-wasm-ld --no-entry --export-all --allow-undefined -o output.wasm output.o
+-----------------------------
+LLVM IR to WebAssembly (Extra Credit)
+-----------------------------
 
-Test case 1 : There are four test cases. This test case creates a class and an object of that classs. This class has member funtions and class variables.
-             We take a numberical input from user and echo's it back on the terminal. The numerical input is the class variable being assigned the value. 
-             This way we exhibit Object Oriented functionality of accessing member functions and variables with this test case
+We use Emscripten to compile LLVM IR to WebAssembly:
 
-Test case 2 : Same as above but take string input name and print it out to the terminal also using Classes,Objects, Class Methods,Variables
+1. Compile .ll to .wasm using emcc:
+   emcc test.ll -o output.js -s WASM=1 
 
-Test case 3 : Constructor functionality added in this test case. Display of variable done through constructor call during object instantiation with  FOR LOOP
+2. This will generate:
+   - output.js      (glue code to load the wasm)
+   - output.wasm    (compiled WebAssembly)
 
-Test case 4 : Simple hello world program to demonstrate functionality of displaying custom messages on terminal, using WriteLn
+3. Run in browser:
+   In another terminal, execute python3 -m http.server 8000 
+   Visit http://localhost:8000/output.html on the browser to see the output for that specific test case/
+   It uses output.html to render, output.js to load and instantiate output.wasm and call the exported function.
 
-Test case 5 : User defined procedures,while loop and continue keyword functionality
+-----------------------------
+Language Features Implemented
+-----------------------------
 
-Test case 6 : Displaying Local varibale (Scoping)
+testOops.pas      - Class and Objects
+testEncap.pas     - Encapsulation
+testscope.pas     - Static scoping
+testWhile.pas     - While-do loop and continue keyword
+testFor.pas       - for-do loop ,break and continue keywords
+testProc.pas      - User defined procedures
+testFunc.pas      - User defined functions
 
-Test case 7  : Displaying Global varibale (Scoping)
+----------------
+Demo Video Link
+----------------
 
-Test case 8 : User defined procedures,while loop and break keyword functionality
+Watch our demo video here:
+https://drive.google.com/file/d/1t-Fen5IweA7EiID8iTq2_ykl9r5e09Zz/view
 
-Test case 9 : User defined functions which can return values. Exihibited this functionality by displaying the returned value in Writeln functionality
 
+-------------------
+Credits / Team Info
+-------------------
 
-Things to do in Project 2;
-For loop : Test case 3
-While loop : Test 5,8
-Continue : Test case 5
-Break : Test case 8
-Functions : Test 9
-Procedures is in all test cases except 9
-
-Static scoping is done in all test cases. Explicitly tested in test case 6 & 7
+- Vaishnavi Kalva (51796466)
+- Saiesh Prabhu (57751975)

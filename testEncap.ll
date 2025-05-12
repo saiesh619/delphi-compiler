@@ -35,6 +35,7 @@ define i32 @main() {
  call i32 @TCounter_SetValue(%class.TCounter* %t9)
  call i32 @TCounter_Increment(%class.TCounter* %t9)
  call i32 @TCounter_Increment(%class.TCounter* %t9)
+ call i32 @TCounter_Increment(%class.TCounter* %t9)
  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str10, i32 0, i32 0))
  %t11 = call i32 @TCounter_GetValue(%class.TCounter* %t9)
  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32 %t11)
