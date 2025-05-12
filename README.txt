@@ -1,4 +1,3 @@
-Here’s a polished and beginner-friendly version of your `README.md` for the `delphi-compiler` project:
 
 ---
 
