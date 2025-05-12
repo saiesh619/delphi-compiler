@@ -1,31 +1,23 @@
-program ForDoOOP;
+program Number;
+
 type
   TLooper = class
   public
-    procedure RunLoop;
+    function funcAdd;
   end;
 
-procedure TLooper.RunLoop;
+function TLooper.funcAdd;
 begin
-    var j: Integer ;
-    j:= 0;
-    while j < 10 do    
-    begin
-    j := j + 1;
-    if j < 5 then
-    begin 
-    continue;
-    end;
-    WriteLn('Counter = ', j);        
-    end;
-  end;
-
-
+  var result: Integer;
+  WriteLn('Inside the function called');
+  result:= 78 + 12;
+end;
 
 var
   Looper: TLooper;
 
 begin  
   Looper := TLooper.Create;
-  Looper.RunLoop;  
+  WriteLn('Before callling function');
+  WriteLn('Answer: ',  Looper.funcAdd());
 end.

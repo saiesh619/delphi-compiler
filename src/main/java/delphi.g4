@@ -81,7 +81,8 @@ fieldDeclaration
     ;
 
 methodDeclaration
-    : PROCEDURE identifier SEMI
+    : (PROCEDURE|FUNCTION) identifier SEMI
+    | FUNCTION IDENT LPAREN IDENT (COMMA IDENT)* COLON IDENT RPAREN COLON IDENT SEMI
     ;
 
 variableDeclarationPart
@@ -131,10 +132,6 @@ breakStatement
 continueStatement
     : CONTINUE
     ;
-
-
-
-
 
 
 scope:
@@ -236,6 +233,7 @@ CONTINUE: 'continue';
 VAR: 'var';
 CLASS: 'class';
 PROCEDURE: 'procedure';
+FUNCTION : 'function';
 BEGIN: 'begin';
 END: 'end';
 SEMI: ';';
@@ -298,7 +296,6 @@ STRING_LITERAL
 COMMA: ',';
 
 methodImplementation
-    : PROCEDURE qualifiedIdent SEMI compoundStatement 
+    : (PROCEDURE|FUNCTION) qualifiedIdent (LPAREN IDENT (COMMA IDENT)* COLON typeIdentifier RPAREN COLON typeIdentifier)? SEMI compoundStatement     
     ;
-
 

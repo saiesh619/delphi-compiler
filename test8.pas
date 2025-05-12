@@ -1,4 +1,4 @@
-program Break;
+program BreakTesting;
 type
   TLooper = class
   public
@@ -26,6 +26,6 @@ var
   Looper: TLooper;
 
 begin  
-  Looper := TLooper.Create;
+  Looper := TLooperCreate;.
   Looper.RunLoop;  
 end.

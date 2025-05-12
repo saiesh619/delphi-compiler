@@ -1,126 +1,59 @@
-Here’s an updated and detailed **README.md** file that clearly explains how to run the project, what’s implemented, and what’s planned for future additions. This should be suitable for submission and helpful for the TAs reviewing your work.
+HOW TO RUN THE CODE:
 
----
+delphi.g4 - is in src/main/java
+DelphiInterpreter.java - is in src/main/java
+test files - in delphi-compiler directory (main folder)
 
-# Delphi Interpreter (ANTLR4 + Java)
+1. To generate parser and lexers and helpers (run from src/main/java directory)
+    antlr4 -visitor -no-listener delphi.g4
 
-## 📌 Introduction
-Pascal is a procedural programming language developed by Niklaus Wirth in 1970. Delphi is its object-oriented successor, much like how C++ is to C. This project extends Pascal by adding key object-oriented features using ANTLR4 and Java, building a functioning interpreter that processes `.pas` (Delphi) files.
+    antlr4 -visitor -no-listener src/main/java/delphi.g4
 
----
+2. Compile all the Java files (run from delphi-compiler directory(main folder))
 
-## 🧠 What’s Implemented (Project Part 1)
+    javac -cp "lib/antlr4.jar:src/main/java" -d target src/main/java/*.java
 
-### ✅ Language Features Implemented:
-- **Classes and Objects**
-- **Encapsulation (class variables and methods)**
-- **Constructors**
-- **Input/Output operations using `ReadLn` and `WriteLn`**
+3. Run Java Interpreter for Delphi for each test file (run from delphi-compiler directory(main folder))
+    Test case 1 : java -cp "lib/antlr4.jar:target" DelphiInterpreter test1.pas 
+    Test case 2 : java -cp "lib/antlr4.jar:target" DelphiInterpreter test2.pas 
+    Test case 3 : java -cp "lib/antlr4.jar:target" DelphiInterpreter test3.pas 
+    Test case 4 : java -cp "lib/antlr4.jar:target" Main test.pas 
 
-### 📦 Grammar
-- `delphi.g4` is a modified version of the Pascal grammar, extended to support Delphi-like constructs.
+    Similary for other tests 
 
-### 🖥️ Interpreter
-- `DelphiInterpreter.java` uses the ANTLR4 visitor pattern to walk through the generated AST and interpret the language behavior.
+export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+ 
+llc -march=wasm32 -filetype=obj output.ll -o output.o
+ 
+wasm-ld --no-entry --export-all --allow-undefined -o output.wasm output.o
 
----
+Test case 1 : There are four test cases. This test case creates a class and an object of that classs. This class has member funtions and class variables.
+             We take a numberical input from user and echo's it back on the terminal. The numerical input is the class variable being assigned the value. 
+             This way we exhibit Object Oriented functionality of accessing member functions and variables with this test case
 
-## 🚀 How to Run the Code
+Test case 2 : Same as above but take string input name and print it out to the terminal also using Classes,Objects, Class Methods,Variables
 
-### 📁 Project Structure
-```
-delphi-compiler/
-├── lib/
-│   └── antlr4.jar
-├── src/
-│   └── main/
-│       └── java/
-│           ├── delphi.g4
-│           └── DelphiInterpreter.java
-├── target/
-├── test1.pas
-├── test2.pas
-├── test3.pas
-├── test4.pas
-└── pom.xml
-```
+Test case 3 : Constructor functionality added in this test case. Display of variable done through constructor call during object instantiation with  FOR LOOP
 
-### 1. Generate Lexer & Parser
-**Run from `src/main/java/` directory:**
-```bash
-antlr4 -visitor -no-listener delphi.g4
-```
+Test case 4 : Simple hello world program to demonstrate functionality of displaying custom messages on terminal, using WriteLn
 
-### 2. Compile Java Files
-**Run from the project root (`delphi-compiler/`):**
-```bash
-javac -cp "lib/antlr4.jar:src/main/java" -d target src/main/java/*.java
-```
+Test case 5 : User defined procedures,while loop and continue keyword functionality
 
-### 3. Execute Test Files
-**Run each test case from the project root (`delphi-compiler/`):**
-```bash
-java -cp "lib/antlr4.jar:target" DelphiInterpreter test1.pas
-java -cp "lib/antlr4.jar:target" DelphiInterpreter test2.pas
-java -cp "lib/antlr4.jar:target" DelphiInterpreter test3.pas
-java -cp "lib/antlr4.jar:target" DelphiInterpreter test4.pas
-java -cp "lib/antlr4.jar:target" DelphiInterpreter test5.pas
-```
-java -cp "lib/antlr4.jar:target" DelphiInterpreter test4.pas
----
+Test case 6 : Displaying Local varibale (Scoping)
 
-## 🧪 Test Case Breakdown
+Test case 7  : Displaying Global varibale (Scoping)
 
-| Test Case | Description |
-|-----------|-------------|
-| **test1.pas** | Demonstrates classes, object instantiation, class methods, and class variables with integer input/output. |
-| **test2.pas** | Same as test1, but with string input/output showcasing OOP features. |
-| **test3.pas** | Adds constructor functionality and shows variable initialization through the constructor. |
-| **test4.pas** | Basic Hello World-style program using `WriteLn` to print messages to the terminal. |
+Test case 8 : User defined procedures,while loop and break keyword functionality
 
----
+Test case 9 : User defined functions which can return values. Exihibited this functionality by displaying the returned value in Writeln functionality
 
-## 🔨 Tools & Dependencies
-- **ANTLR4** (used to define grammar and generate parser)
-- **Java 8+**
-- **Maven** (for managing dependencies via `pom.xml`)
 
----
+Things to do in Project 2;
+For loop : Test case 3
+While loop : Test 5,8
+Continue : Test case 5
+Break : Test case 8
+Functions : Test 9
+Procedures is in all test cases except 9
 
-## 🏗️ What We Will Add (Project Part 2)
-
-### 🧩 Language Extensions
-- [ ] `while-do` and `for-do` loops
-- [ ] `break` and `continue` support
-- [ ] User-defined **procedures** and **functions**
-- [ ] Proper **static scoping**
-
-### 🧠 Scope Management
-- New scope created for:
-  - Each block (e.g., `for`, `while`)
-  - Each procedure/function
-- Global and local variable resolution with chained scopes
-
----
-
-## ✨ Bonuses (Planned for Part 2)
-
-| Bonus | Description |
-|-------|-------------|
-| ✅ **Constant Propagation** | Compile-time evaluation of constant expressions like `v = 2*(10+11)` → `v = 42`. |
-| ✅ **Formal Parameter Passing** | Pass parameters to procedures/functions with correct scope handling. |
-
----
-
-## 📦 Submission Instructions
-Turn in the following:
-- `delphi.g4` grammar
-- All Java source files (`*.java`)
-- Test files (`*.pas`)
-- `README.md`
-- `pom.xml`
-- Bundle everything in a `.zip` file
-
----
-
-If you'd like, I can also generate this as a markdown file (`README.md`) or help you create a polished GitHub repository. Want that?
+Static scoping is done in all test cases. Explicitly tested in test case 6 & 7

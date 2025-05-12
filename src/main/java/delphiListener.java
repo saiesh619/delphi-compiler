@@ -187,16 +187,6 @@ public interface delphiListener extends ParseTreeListener {
 	 */
 	void exitVariableDeclarationPart(delphiParser.VariableDeclarationPartContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link delphiParser#qualifiedIdent}.
-	 * @param ctx the parse tree
-	 */
-	void enterQualifiedIdent(delphiParser.QualifiedIdentContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link delphiParser#qualifiedIdent}.
-	 * @param ctx the parse tree
-	 */
-	void exitQualifiedIdent(delphiParser.QualifiedIdentContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link delphiParser#variableDeclaration}.
 	 * @param ctx the parse tree
 	 */
@@ -257,6 +247,16 @@ public interface delphiListener extends ParseTreeListener {
 	 */
 	void exitExpression(delphiParser.ExpressionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link delphiParser#objectInstantiation}.
+	 * @param ctx the parse tree
+	 */
+	void enterObjectInstantiation(delphiParser.ObjectInstantiationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link delphiParser#objectInstantiation}.
+	 * @param ctx the parse tree
+	 */
+	void exitObjectInstantiation(delphiParser.ObjectInstantiationContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link delphiParser#methodCall}.
 	 * @param ctx the parse tree
 	 */
@@ -266,6 +266,16 @@ public interface delphiListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMethodCall(delphiParser.MethodCallContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link delphiParser#qualifiedIdent}.
+	 * @param ctx the parse tree
+	 */
+	void enterQualifiedIdent(delphiParser.QualifiedIdentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link delphiParser#qualifiedIdent}.
+	 * @param ctx the parse tree
+	 */
+	void exitQualifiedIdent(delphiParser.QualifiedIdentContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link delphiParser#visibilitySection}.
 	 * @param ctx the parse tree

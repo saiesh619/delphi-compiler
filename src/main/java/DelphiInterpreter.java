@@ -21,14 +21,13 @@ public class DelphiInterpreter extends delphiBaseVisitor <Object> {
     private Map<String, Map<String, Object>> classDefinitions = new HashMap<>();
     private String currentClassName = null;  // Stores the class currently being executed
 
-
-    
     
     @Override
     public Object visitMethodImplementation(delphiParser.MethodImplementationContext ctx) {
     String methodName = ctx.qualifiedIdent().getText();
+    
     //println("Defining method: " + methodName);
-
+    
     // 🔹 Extract class name
     String[] parts = methodName.split("\\.");
     if (parts.length != 2) {
@@ -44,9 +43,11 @@ public class DelphiInterpreter extends delphiBaseVisitor <Object> {
         throw new RuntimeException("Class not defined: " + className);
     }
 
+    
     // 🔹 Store method implementation
     classDefinitions.get(className).put(method, ctx.compoundStatement());
     //System.out.println("Method " + method + " added to class " + className);
+    //System.out.println(classDefinitions);
 
     return null;
 }
@@ -55,7 +56,7 @@ public Object visitCompoundStatement(delphiParser.CompoundStatementContext ctx) 
     scopes.push(new HashMap<>());
     System.out.println("NEW SCOPE CREATED");
     Object result = visit(ctx.statementList());
-    scopes.pop(); 
+    //scopes.pop(); 
     return result;
 }
 
@@ -169,48 +170,57 @@ public Object visitObjectInstantiation(delphiParser.ObjectInstantiationContext c
     
 @Override
 public Object visitMethodCall(delphiParser.MethodCallContext ctx) {
-    //System.out.println("inside visit methos call");
     String methodCall = ctx.qualifiedIdent().getText();
 
-    // Extract instance name and method name
     String[] parts = methodCall.split("\\.");
     if (parts.length != 2) {
         throw new RuntimeException("Invalid method call: " + methodCall);
     }
 
-    String instanceName = parts[0];  // e.g., `Calc`
-    String methodName = parts[1];    // e.g., `ReadNumber`
+    String instanceName = parts[0];
+    String methodName = parts[1];
 
-    // 🔹 Resolve instance name if stored in `variables`
     if (variables.containsKey(instanceName) && objects.containsKey(variables.get(instanceName))) {
         instanceName = variables.get(instanceName).toString();
     }
 
-    // Check if instance exists
     if (!objects.containsKey(instanceName)) {
         throw new RuntimeException("Undefined object: " + instanceName);
     }
 
     Map<String, Object> instance = objects.get(instanceName);
-    //System.out.println("Instance name isssss: "+ instance);
-
-    // 🔹 Hardcoded handling for built-in methods
-
-    // 🔹 Handle User-Defined Methods
     String className = instance.get("__class__").toString();
     Map<String, Object> classInfo = classDefinitions.get(className);
 
     if (!classInfo.containsKey(methodName)) {
         throw new RuntimeException("Unknown method: " + methodName + " in class " + className);
     }
-
-    // Retrieve and execute method
+   //.println("Method call");
     Object methodImpl = classInfo.get(methodName);
-    if (methodImpl instanceof delphiParser.CompoundStatementContext) {
-        return visit((delphiParser.CompoundStatementContext) methodImpl);
-    } else {
-        throw new RuntimeException("Method " + methodName + " is not implemented.");
+    if (methodImpl instanceof delphiParser.CompoundStatementContext methodBody) {
+        //System.out.println(classInfo);
+        //System.out.println("Method call");
+        // Create a new scope
+       //System.out.println("scopes");
+        //System.out.println(objects);
+        Map<String, Object> localScope = new HashMap<>();
+
+        localScope.put("result", 0); // support 'Result := ...'
+        localScope.put(methodName, 0); // support 'funcName := ...'
+        scopes.push(localScope);
+
+        visit(methodBody);
+
+        Object result = localScope.get("Result");
+        if (result == null) {
+            result = localScope.get(methodName);
+        }
+
+        scopes.pop();
+        return result;
     }
+
+    throw new RuntimeException("Method " + methodName + " is not implemented.");
 }
 
 /**
@@ -241,7 +251,8 @@ private Object executeMethod(Map<String, Object> instance, String methodName, Li
         }        
         else if (ctx.stringLiteral() != null) {
             return ctx.stringLiteral().getText();  // Return string value
-        } else if (ctx.qualifiedIdent() != null) {
+        }  
+        else if (ctx.qualifiedIdent() != null) {
             
             String varName = ctx.qualifiedIdent().getText();  
             
@@ -260,8 +271,7 @@ private Object executeMethod(Map<String, Object> instance, String methodName, Li
         else if (ctx.objectInstantiation() != null) {
             return visit(ctx.objectInstantiation());  // Visit method calls
         } else if (ctx.expression().size() == 2 && ctx.op != null) {
-            
-            
+                   
             int left = (int) visit(ctx.expression(0));
             int right = (int) visit(ctx.expression(1));
             
@@ -277,10 +287,22 @@ public Object visitAssignmentStatement(delphiParser.AssignmentStatementContext c
     String varName = ctx.qualifiedIdent().getText();
     
     Object value = visit(ctx.expression()); // Evaluate right-hand side
+   // System.out.println("varname inside assn stmt:"+ varName);
+   // System.out.println("value inside assn stmt:"+ value);
+   // System.out.println(scopes);
+
+    scopes.peek().put("result", value);
+   // System.out.println(objects);
+   // System.out.println(scopes);
+
+
     
-    if (value instanceof String && ((String) value).startsWith("Instance_")) {        
+    if (value instanceof String && ((String) value).startsWith("Instance_")) {   
+        //System.out.println("nside assn stmt instnc____:");     
         objects.put(varName, objects.get(value));
     } if (currentClassName != null && objects.containsKey(currentClassName)) {
+        //System.out.println("nside assn stmt currclas:");     
+
         Map<String, Object> instance = objects.get(currentClassName);
         if (instance.containsKey(varName)) {
             
@@ -397,16 +419,41 @@ public Object visitProcedureCall(delphiParser.ProcedureCallContext ctx) {
     String procedureName = ctx.getChild(0).getText();
 
     if (procedureName.equalsIgnoreCase("Write") || procedureName.equalsIgnoreCase("WriteLn")) {
+        //System.out.println("writeLn");
         if (ctx.parameterList() != null && ctx.parameterList().expression().size()>=1) {
+            //System.out.println("inside here sizgeater than 1  writeln");
 
-            if(ctx.parameterList().expression().size()==2){                
-                Object valueToPrint = resolveVariableValue(ctx.parameterList().expression(1).getText());                
+            if(ctx.parameterList().expression().size()==2){ 
+
+                //System.out.println("inside here size 2 writeln");
+                Object valueToPrint;
+                //System.out.println(ctx.parameterList().expression(1).getText());
+                delphiParser.ExpressionContext expr = ctx.parameterList().expression(1);
+                if (expr.methodCall() != null) {
+                    valueToPrint = visit(expr.methodCall()); // Call and get return           
+                    //System.out.println("scopescorrect: "+scopes);  
+                    scopes.pop();       
+                    //System.out.println("HEREEeeeeeeeee" + scopes.peek().get("result"));
+                    //System.out.println(objects);
+                    valueToPrint = scopes.peek().get("result");
+                }
+                else if(expr.qualifiedIdent()!=null){
+                    valueToPrint = resolveVariableValue(expr.qualifiedIdent().getText());
+                    //System.out.println("inside function result qualified where we want it: "+objects);
+                
+                } else {
+                    valueToPrint = resolveVariableValue(expr.getText());
+                }         
+    
+                //.println("valuetoprint:"+ valueToPrint);             
+
                     System.out.println(
                         ctx.parameterList().expression(0).getText().substring(1, 
                         ctx.parameterList().expression(0).getText().length()-1) + valueToPrint);
 
             }
             else if(ctx.parameterList().expression().size()==1){
+                //System.out.println("inside here size 1 writeln");
                 System.out.println(ctx.parameterList().expression(0).getText().substring(1, ctx.parameterList().expression(0).getText().length()-1));
 
             }
@@ -415,6 +462,7 @@ public Object visitProcedureCall(delphiParser.ProcedureCallContext ctx) {
     }
 
     if (procedureName.equalsIgnoreCase("ReadLn")) {
+        //System.out.println("readln");
         if (ctx.parameterList() != null && ctx.parameterList().expression().size() == 1) {
             String varName = ctx.parameterList().expression(0).getText();
 
@@ -484,6 +532,7 @@ public Object visitProcedureCall(delphiParser.ProcedureCallContext ctx) {
         }
     }
     if (ctx.qualifiedIdent() != null) {
+        //System.out.println("qualident");
         String methodCall = ctx.qualifiedIdent().getText();
 
         // Extract instance name and method name
@@ -494,9 +543,12 @@ public Object visitProcedureCall(delphiParser.ProcedureCallContext ctx) {
 
         String instanceName = parts[0];  // e.g., `Calc`
         String methodName = parts[1];    // e.g., `ReadNumber`
-
+    
         // 🔹 Set the current class name
+        //System.out.println("instANCE"+instanceName);
+        
         currentClassName = instanceName;
+        //System.out.println("currentClassName: "+currentClassName);
         //System.out.println("Executing method in class: " + currentClassName);
        //System.out.println("Procedure call detected - Instance: " + instanceName + ", Method: " + methodName);
 
@@ -592,7 +644,16 @@ public Object visitFieldDeclaration(delphiParser.FieldDeclarationContext ctx) {
 }
 
 private Object resolveVariableValue(String varName) {
+    //System.out.println(currentClassName);
+    //System.out.println(objects.get(currentClassName));
+    //System.out.println("varName " + varName);
+   // System.out.println(currentClassName);
+    //System.out.println(objects.get(currentClassName));
+    //System.out.println("varName " + varName);
+    //System.out.println(scopes);
+    //System.out.println(variables);
     Object value =  objects.get(currentClassName).get(varName);
+    
     if(value == null){
     for (Map<String, Object> scope : scopes) {        
         if (scope.containsKey(varName)) {                
@@ -807,8 +868,5 @@ public Object visitFactor(delphiParser.FactorContext ctx) {
 
         //System.out.println("Execution Completed.");
     }
-    
- 
-    
-    
+       
 }
