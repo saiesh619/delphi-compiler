@@ -1,116 +1,73 @@
 
- 🔧 Delphi-to-LLVM IR Compiler
 
-Transform Pascal-style code into **LLVM Intermediate Representation (IR)** — and even run it in the browser via **WebAssembly**!  
-This project evolves from a basic interpreter into a full compiler pipeline using **ANTLR4**, **LLVM**, and **Emscripten**.
+🔧 Delphi-to-LLVM IR Compiler
 
+* Converts Pascal-style code into LLVM IR and WebAssembly (WASM)
+* Evolved from an interpreter into a full compiler using ANTLR4, LLVM, and Emscripten
 
- 📁 Project Overview
+📁 Project Overview
 
-This compiler supports a Delphi-like language and performs the following:
+* Parses `.pas` files using custom ANTLR4 grammar
+* Generates LLVM IR via a Java-based visitor
+* Optionally compiles IR to WebAssembly for browser execution
 
-- Parses `.pas` files using a custom ANTLR4 grammar
-- Generates LLVM IR via a Java-based visitor
-- Optionally compiles IR to WebAssembly for browser execution
+🗂️ Directory Structure
 
----
+* Main.java – Entry point to parse `.pas` and emit LLVM IR
+* LLVMGenerator.java – Walks AST and generates LLVM IR
+* delphi.g4 – ANTLR4 grammar for Pascal/Delphi subset
+* \*.pas – Sample input files
+* \*.ll – LLVM IR output
+* output.js / output.wasm / output.html – WebAssembly output and loader
+* compile\_all.sh – Batch compile all `.pas` files
+* run.sh – Run/verify individual tests
 
-## 🗂️ Directory Structure
+🛠️ How to Use
 
-```
+1. Generate parser & build:
 
-delphi-compiler/
-├── Main.java             # Entry point: parses .pas files and emits LLVM IR
-├── LLVMGenerator.java    # Visitor: walks AST and emits LLVM IR
-├── delphi.g4             # ANTLR4 grammar for Pascal/Delphi subset
-├── \*.pas                 # Sample source files
-├── \*.ll                  # Generated LLVM IR output
-├── output.js             # JavaScript glue for WebAssembly
-├── output.wasm           # WebAssembly binary
-├── output.html           # Web interface to run WASM
-├── compile\_all.sh        # Compile all .pas → .ll
-├── run.sh                # Run/verify a specific test
+   * `antlr4 -visitor -no-listener delphi.g4`
+   * `javac -cp lib/antlr4.jar *.java`
 
+2. Compile a `.pas` file:
 
+   * `java -cp lib/antlr4.jar:. Main test1.pas`
 
+3. Compile all files:
 
+   * `chmod +x compile_all.sh && ./compile_all.sh`
 
- 🛠️ Step 1: Generate Parser & Build Compiler
+🌐 WebAssembly Compilation
 
-```bash
-antlr4 -visitor -no-listener delphi.g4
-javac -cp lib/antlr4.jar *.java
-````
+* Convert LLVM IR to WASM: `emcc test.ll -o output.js -s WASM=1`
+* Serve locally: `python3 -m http.server 8000`
+* Open in browser: `http://localhost:8000/output.html`
 
- 🔄 Step 2: Compile a `.pas` file to LLVM IR
+✅ Features
 
-```bash
-java -cp lib/antlr4.jar:. Main test1.pas
-```
+* Classes & Objects – testOops.pas
+* Encapsulation – testEncap.pas
+* Static Scoping – testscope.pas
+* While Loops – testWhile.pas
+* For Loops – testFor.pas
+* Procedures – testProc.pas
+* Functions – testFunc.pas
 
- 📦 Step 3: Compile All `.pas` Files
+🤖 Tech Stack
 
-```bash
-chmod +x compile_all.sh
-./compile_all.sh
-```
+* ANTLR4 – Grammar and parser generation
+* Java – AST walking and IR generation
+* LLVM – Target backend
+* Emscripten – IR to WebAssembly conversion
 
----
+📌 Notes
 
-🌐 WebAssembly Integration (Optional)
+* Modular and extensible for new features
+* Focus on correctness, clarity, and static scoping
 
-Use **Emscripten** to convert LLVM IR into WebAssembly and run it in a browser.
+💡 Future Additions
 
-### ⚙️ Compile to WASM
-
-```bash
-emcc test.ll -o output.js -s WASM=1
-```
-
- 🌍 Serve Locally
-
-```bash
-python3 -m http.server 8000
-# Open: http://localhost:8000/output.html
-```
-
----
-
- ✅ Supported Features
-
-| Feature               | File            | Description                                 |
-| --------------------- | --------------- | ------------------------------------------- |
-| **Classes & Objects** | `testOops.pas`  | Object instantiation, constructors, methods |
-| **Encapsulation**     | `testEncap.pas` | Access control for object members           |
-| **Static Scoping**    | `testscope.pas` | Nested scope resolution                     |
-| **While Loops**       | `testWhile.pas` | `while-do` loop with `continue`             |
-| **For Loops**         | `testFor.pas`   | `for-do` loop with `break`/`continue`       |
-| **Procedures**        | `testProc.pas`  | Custom procedures with parameters           |
-| **Functions**         | `testFunc.pas`  | Return-type functions with full support     |
-
----
-
-## 🤖 Tech Stack
-
-ANTLR4 – Grammar and parser generation
-Java – AST walking & LLVM IR code generation
-LLVM – Target backend for IR representation
-Emscripten** – IR → WebAssembly conversion
-
----
-
- 📌 Notes
-
- The project is modular and extensible for new language features
- Focus is on correctness, clarity, and scoping for a Pascal-like syntax
-
----
-
- 💡 Future Additions
-
- Type checking and semantic validation
- Optimized IR generation
- Interactive Web IDE for live code execution
-
----
+* Type checking and semantic validation
+* Optimized IR generation
+* Interactive web-based IDE for live execution
 
