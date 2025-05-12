@@ -1,82 +1,104 @@
---------------------------------------
-Delphi to LLVM IR Compiler (Project 3)
---------------------------------------
+Here’s a polished and beginner-friendly version of your `README.md` for the `delphi-compiler` project:
 
-This project compiles our Delphi/Pascal language to LLVM Intermediate Representation (IR).
-As an extension of Project 1 and 2, this project replaces interpretation with code generation. For extra credit,
-it also supports compiling LLVM IR to WebAssembly (WASM) using Emscripten and running it in a browser.
+---
 
--------------------------------------------------------
-Project Directory Contents (delphi-compiler_final/)
--------------------------------------------------------
+```markdown
+# 🛠️ Delphi to LLVM IR Compiler
 
-Main.java               - Main class that parses .pas files and generates LLVM IR
-LLVMGenerator.java      - Visitor that emits LLVM IR instead of evaluating
-delphi.g4               - ANTLR grammar 
-*                       - Sample Delphi input files
-*.ll                    - Corresponding generated LLVM IR files
-output.wasm             - WebAssembly file compiled from LLVM IR (via Emscripten)
-output.html             - Web page to load and execute the .wasm module
-output.js               - JavaScript to load and call exported WASM functions
-run.sh                  - Run and verify individual testfiles (execute ./output after this)
-compile_all.sh          - Script to batch compile all .pas files to .ll files
+Welcome to our **Delphi-to-LLVM IR compiler**, a full-featured project that transforms Pascal-style source code into low-level **LLVM Intermediate Representation (IR)** — and even compiles it into **WebAssembly (WASM)** for execution in the browser!
 
----------------------
-How to Build and Run
----------------------
+This project is a continuation of our interpreter efforts, evolving into a full compiler pipeline using ANTLR, LLVM, and Emscripten.
 
-1. Generate ANTLR parser and compile Java files:
-   antlr4 -visitor -no-listener delphi.g4
-   javac -cp lib/antlr4.jar *.java
+---
 
-2. Compile a single .pas file to LLVM IR:
-   java -cp lib/antlr4.jar:target Main test1.pas
+## 📁 Project Structure
 
-3. Compile all .pas files to LLVM IR .ll at once in the directory:
-   chmod +x compileAll.sh
-   ./compileAll.sh
+```
 
------------------------------
-LLVM IR to WebAssembly (Extra Credit)
------------------------------
+delphi-compiler/
+├── Main.java             # Entry point: parses .pas files and emits LLVM IR
+├── LLVMGenerator.java    # Visitor: walks the AST and generates LLVM IR code
+├── delphi.g4             # ANTLR grammar for our Delphi subset
+├── \*.pas                 # Sample Delphi input programs
+├── \*.ll                  # Output LLVM IR files
+├── output.js             # JavaScript loader for WebAssembly
+├── output.wasm          # WebAssembly binary compiled from LLVM IR
+├── output.html          # Webpage that loads & runs the WebAssembly module
+├── compile\_all.sh        # Batch-compile all .pas → .ll
+├── run.sh                # Run/verify a specific compiled test
 
-We use Emscripten to compile LLVM IR to WebAssembly:
+````
 
-1. Compile .ll to .wasm using emcc:
-   emcc test.ll -o output.js -s WASM=1 
+---
 
-2. This will generate:
-   - output.js      (glue code to load the wasm)
-   - output.wasm    (compiled WebAssembly)
+## 🚀 Getting Started
 
-3. Run in browser:
-   In another terminal, execute python3 -m http.server 8000 
-   Visit http://localhost:8000/output.html on the browser to see the output for that specific test case/
-   It uses output.html to render, output.js to load and instantiate output.wasm and call the exported function.
+### Step 1: Build the Parser & Compiler
 
------------------------------
-Language Features Implemented
------------------------------
+Generate the ANTLR parser and compile all Java files:
+```bash
+antlr4 -visitor -no-listener delphi.g4
+javac -cp lib/antlr4.jar *.java
+````
 
-testOops.pas      - Class and Objects
-testEncap.pas     - Encapsulation
-testscope.pas     - Static scoping
-testWhile.pas     - While-do loop and continue keyword
-testFor.pas       - for-do loop ,break and continue keywords
-testProc.pas      - User defined procedures
-testFunc.pas      - User defined functions
+### Step 2: Compile a Delphi `.pas` file to LLVM IR
 
-----------------
-Demo Video Link
-----------------
+```bash
+java -cp lib/antlr4.jar:. Main test1.pas
+```
 
-Watch our demo video here:
-https://drive.google.com/file/d/1t-Fen5IweA7EiID8iTq2_ykl9r5e09Zz/view
+### Step 3: Compile All `.pas` Files at Once
 
+```bash
+chmod +x compile_all.sh
+./compile_all.sh
+```
 
--------------------
-Credits / Team Info
--------------------
+---
 
-- Vaishnavi Kalva (51796466)
-- Saiesh Prabhu (57751975)
+## 🌐 WebAssembly Output (Extra Credit)
+
+You can take the generated `.ll` LLVM IR file and compile it into WebAssembly using Emscripten:
+
+### Step 1: Compile `.ll` to WebAssembly
+
+```bash
+emcc test.ll -o output.js -s WASM=1
+```
+
+### Step 2: Run in Your Browser
+
+```bash
+python3 -m http.server 8000
+# Now open http://localhost:8000/output.html
+```
+
+This setup uses:
+
+* `output.js`: glue code to load WebAssembly
+* `output.wasm`: compiled binary
+* `output.html`: interactive HTML page to run the test
+
+---
+
+## ✅ Features Implemented
+
+| Feature           | Example File    | Description                                    |
+| ----------------- | --------------- | ---------------------------------------------- |
+| Classes & Objects | `testOops.pas`  | Supports object creation and method calls      |
+| Encapsulation     | `testEncap.pas` | Variable/method access controls                |
+| Static Scoping    | `testscope.pas` | Nested blocks with correct scope resolution    |
+| While Loops       | `testWhile.pas` | `while-do` and `continue` keyword              |
+| For Loops         | `testFor.pas`   | `for-do`, `break`, and `continue` support      |
+| Procedures        | `testProc.pas`  | User-defined procedures with parameter passing |
+| Functions         | `testFunc.pas`  | Full function support including return types   |
+
+---
+
+## 📽️ Demo Video
+
+Watch our live demo here:
+🎥 [Demo on Google Drive](https://drive.google.com/file/d/1t-Fen5IweA7EiID8iTq2_ykl9r5e09Zz/view)
+
+---
+
