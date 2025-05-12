@@ -1,52 +1,54 @@
 
+ 🔧 Delphi-to-LLVM IR Compiler
+
+Transform Pascal-style code into **LLVM Intermediate Representation (IR)** — and even run it in the browser via **WebAssembly**!  
+This project evolves from a basic interpreter into a full compiler pipeline using **ANTLR4**, **LLVM**, and **Emscripten**.
+
+
+ 📁 Project Overview
+
+This compiler supports a Delphi-like language and performs the following:
+
+- Parses `.pas` files using a custom ANTLR4 grammar
+- Generates LLVM IR via a Java-based visitor
+- Optionally compiles IR to WebAssembly for browser execution
+
 ---
 
-```markdown
-# 🛠️ Delphi to LLVM IR Compiler
-
-Welcome to our **Delphi-to-LLVM IR compiler**, a full-featured project that transforms Pascal-style source code into low-level **LLVM Intermediate Representation (IR)** — and even compiles it into **WebAssembly (WASM)** for execution in the browser!
-
-This project is a continuation of our interpreter efforts, evolving into a full compiler pipeline using ANTLR, LLVM, and Emscripten.
-
----
-
-## 📁 Project Structure
+## 🗂️ Directory Structure
 
 ```
 
 delphi-compiler/
 ├── Main.java             # Entry point: parses .pas files and emits LLVM IR
-├── LLVMGenerator.java    # Visitor: walks the AST and generates LLVM IR code
-├── delphi.g4             # ANTLR grammar for our Delphi subset
-├── \*.pas                 # Sample Delphi input programs
-├── \*.ll                  # Output LLVM IR files
-├── output.js             # JavaScript loader for WebAssembly
-├── output.wasm          # WebAssembly binary compiled from LLVM IR
-├── output.html          # Webpage that loads & runs the WebAssembly module
-├── compile\_all.sh        # Batch-compile all .pas → .ll
-├── run.sh                # Run/verify a specific compiled test
+├── LLVMGenerator.java    # Visitor: walks AST and emits LLVM IR
+├── delphi.g4             # ANTLR4 grammar for Pascal/Delphi subset
+├── \*.pas                 # Sample source files
+├── \*.ll                  # Generated LLVM IR output
+├── output.js             # JavaScript glue for WebAssembly
+├── output.wasm           # WebAssembly binary
+├── output.html           # Web interface to run WASM
+├── compile\_all.sh        # Compile all .pas → .ll
+├── run.sh                # Run/verify a specific test
 
-````
 
----
 
-## 🚀 Getting Started
 
-### Step 1: Build the Parser & Compiler
 
-Generate the ANTLR parser and compile all Java files:
+ 🛠️ Step 1: Generate Parser & Build Compiler
+
 ```bash
 antlr4 -visitor -no-listener delphi.g4
 javac -cp lib/antlr4.jar *.java
 ````
 
-### Step 2: Compile a Delphi `.pas` file to LLVM IR
+ 🔄 Step 2: Compile a `.pas` file to LLVM IR
 
 ```bash
 java -cp lib/antlr4.jar:. Main test1.pas
 ```
 
-### Step 3: Compile All `.pas` Files at Once
+ 📦 Step 3: Compile All `.pas` Files
 
 ```bash
 chmod +x compile_all.sh
@@ -55,49 +57,60 @@ chmod +x compile_all.sh
 
 ---
 
-## 🌐 WebAssembly Output (Extra Credit)
+🌐 WebAssembly Integration (Optional)
 
-You can take the generated `.ll` LLVM IR file and compile it into WebAssembly using Emscripten:
+Use **Emscripten** to convert LLVM IR into WebAssembly and run it in a browser.
 
-### Step 1: Compile `.ll` to WebAssembly
+### ⚙️ Compile to WASM
 
 ```bash
 emcc test.ll -o output.js -s WASM=1
 ```
 
-### Step 2: Run in Your Browser
+ 🌍 Serve Locally
 
 ```bash
 python3 -m http.server 8000
-# Now open http://localhost:8000/output.html
+# Open: http://localhost:8000/output.html
 ```
 
-This setup uses:
+---
 
-* `output.js`: glue code to load WebAssembly
-* `output.wasm`: compiled binary
-* `output.html`: interactive HTML page to run the test
+ ✅ Supported Features
+
+| Feature               | File            | Description                                 |
+| --------------------- | --------------- | ------------------------------------------- |
+| **Classes & Objects** | `testOops.pas`  | Object instantiation, constructors, methods |
+| **Encapsulation**     | `testEncap.pas` | Access control for object members           |
+| **Static Scoping**    | `testscope.pas` | Nested scope resolution                     |
+| **While Loops**       | `testWhile.pas` | `while-do` loop with `continue`             |
+| **For Loops**         | `testFor.pas`   | `for-do` loop with `break`/`continue`       |
+| **Procedures**        | `testProc.pas`  | Custom procedures with parameters           |
+| **Functions**         | `testFunc.pas`  | Return-type functions with full support     |
 
 ---
 
-## ✅ Features Implemented
+## 🤖 Tech Stack
 
-| Feature           | Example File    | Description                                    |
-| ----------------- | --------------- | ---------------------------------------------- |
-| Classes & Objects | `testOops.pas`  | Supports object creation and method calls      |
-| Encapsulation     | `testEncap.pas` | Variable/method access controls                |
-| Static Scoping    | `testscope.pas` | Nested blocks with correct scope resolution    |
-| While Loops       | `testWhile.pas` | `while-do` and `continue` keyword              |
-| For Loops         | `testFor.pas`   | `for-do`, `break`, and `continue` support      |
-| Procedures        | `testProc.pas`  | User-defined procedures with parameter passing |
-| Functions         | `testFunc.pas`  | Full function support including return types   |
+ANTLR4 – Grammar and parser generation
+Java – AST walking & LLVM IR code generation
+LLVM – Target backend for IR representation
+Emscripten** – IR → WebAssembly conversion
 
 ---
 
-## 📽️ Demo Video
+ 📌 Notes
 
-Watch our live demo here:
-🎥 [Demo on Google Drive](https://drive.google.com/file/d/1t-Fen5IweA7EiID8iTq2_ykl9r5e09Zz/view)
+ The project is modular and extensible for new language features
+ Focus is on correctness, clarity, and scoping for a Pascal-like syntax
+
+---
+
+ 💡 Future Additions
+
+ Type checking and semantic validation
+ Optimized IR generation
+ Interactive Web IDE for live code execution
 
 ---
 
