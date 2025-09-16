@@ -1,73 +1,111 @@
 
+# 🔧 Delphi-to-LLVM IR Compiler
 
-🔧 Delphi-to-LLVM IR Compiler
+A **Pascal/Delphi-to-LLVM IR and WebAssembly compiler**.
+Originally built as an interpreter, now evolved into a **full compiler** using **ANTLR4, LLVM, and Emscripten**.
 
-* Converts Pascal-style code into LLVM IR and WebAssembly (WASM)
-* Evolved from an interpreter into a full compiler using ANTLR4, LLVM, and Emscripten
+---
 
-📁 Project Overview
+## 📁 Project Overview
 
-* Parses `.pas` files using custom ANTLR4 grammar
-* Generates LLVM IR via a Java-based visitor
-* Optionally compiles IR to WebAssembly for browser execution
+* Parses `.pas` files with a custom **ANTLR4 grammar**
+* Walks the AST with a **Java-based visitor** to generate LLVM IR
+* Optionally compiles IR into **WebAssembly** for browser execution
 
-🗂️ Directory Structure
+---
 
-* Main.java – Entry point to parse `.pas` and emit LLVM IR
-* LLVMGenerator.java – Walks AST and generates LLVM IR
-* delphi.g4 – ANTLR4 grammar for Pascal/Delphi subset
-* \*.pas – Sample input files
-* \*.ll – LLVM IR output
-* output.js / output.wasm / output.html – WebAssembly output and loader
-* compile\_all.sh – Batch compile all `.pas` files
-* run.sh – Run/verify individual tests
+## 🗂️ Directory Structure
 
-🛠️ How to Use
+```
+.
+├── Main.java           # Entry point – parse `.pas` and emit LLVM IR
+├── LLVMGenerator.java  # AST visitor – generates LLVM IR
+├── delphi.g4           # ANTLR4 grammar for Pascal/Delphi subset
+├── *.pas               # Sample input files
+├── *.ll                # LLVM IR outputs
+├── output.js           # WASM + JS loader
+├── output.wasm         # Compiled WebAssembly binary
+├── output.html         # Test harness for running in browser
+├── compile_all.sh      # Batch-compile all `.pas` files
+└── run.sh              # Run/verify individual tests
+```
 
-1. Generate parser & build:
+---
 
-   * `antlr4 -visitor -no-listener delphi.g4`
-   * `javac -cp lib/antlr4.jar *.java`
+## 🚀 Getting Started
 
-2. Compile a `.pas` file:
+### 1. Generate Parser & Build
 
-   * `java -cp lib/antlr4.jar:. Main test1.pas`
+```bash
+antlr4 -visitor -no-listener delphi.g4
+javac -cp lib/antlr4.jar *.java
+```
 
-3. Compile all files:
+### 2. Compile a `.pas` File
 
-   * `chmod +x compile_all.sh && ./compile_all.sh`
+```bash
+java -cp lib/antlr4.jar:. Main test1.pas
+```
 
-🌐 WebAssembly Compilation
+### 3. Compile All Files
 
-* Convert LLVM IR to WASM: `emcc test.ll -o output.js -s WASM=1`
-* Serve locally: `python3 -m http.server 8000`
-* Open in browser: `http://localhost:8000/output.html`
+```bash
+chmod +x compile_all.sh
+./compile_all.sh
+```
 
-✅ Features
+---
 
-* Classes & Objects – testOops.pas
-* Encapsulation – testEncap.pas
-* Static Scoping – testscope.pas
-* While Loops – testWhile.pas
-* For Loops – testFor.pas
-* Procedures – testProc.pas
-* Functions – testFunc.pas
+## 🌐 WebAssembly Compilation
 
-🤖 Tech Stack
+Convert LLVM IR into WebAssembly:
 
-* ANTLR4 – Grammar and parser generation
-* Java – AST walking and IR generation
-* LLVM – Target backend
-* Emscripten – IR to WebAssembly conversion
+```bash
+emcc test.ll -o output.js -s WASM=1
+python3 -m http.server 8000
+```
 
-📌 Notes
+Open in browser:
 
-* Modular and extensible for new features
-* Focus on correctness, clarity, and static scoping
+```
+http://localhost:8000/output.html
+```
 
-💡 Future Additions
+---
 
-* Type checking and semantic validation
-* Optimized IR generation
-* Interactive web-based IDE for live execution
+## ✅ Supported Features
 
+* **Classes & Objects** – [`testOops.pas`](./testOops.pas)
+* **Encapsulation** – [`testEncap.pas`](./testEncap.pas)
+* **Static Scoping** – [`testScope.pas`](./testScope.pas)
+* **While Loops** – [`testWhile.pas`](./testWhile.pas)
+* **For Loops** – [`testFor.pas`](./testFor.pas)
+* **Procedures** – [`testProc.pas`](./testProc.pas)
+* **Functions** – [`testFunc.pas`](./testFunc.pas)
+
+---
+
+## 🤖 Tech Stack
+
+* **ANTLR4** – Grammar & parser generation
+* **Java** – AST traversal & IR generation
+* **LLVM** – Backend IR target
+* **Emscripten** – LLVM IR → WebAssembly
+
+---
+
+## 📌 Notes
+
+* Designed for **clarity, modularity, and correctness**
+* Implements **static scoping**
+* Easy to extend with new language features
+
+---
+
+## 💡 Future Roadmap
+
+* [ ] Type checking & semantic validation
+* [ ] Optimized IR generation
+* [ ] Interactive **web-based IDE** for live execution
+
+---
